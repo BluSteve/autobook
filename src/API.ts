@@ -18,16 +18,12 @@ class AutobookRequest {
 	searchParams?: any;
 	link?: string;
 	customName?: string;
-	recipientEmail: string;
+	recipientEmail?: string;
 }
 
 app.post("/api", async (req, res) => {
 	try {
 		const request: AutobookRequest = req.body;
-		if (!request.recipientEmail) {
-			res.status(400).send('Recipient email is required');
-			return;
-		}
 
 		let downloader: Downloader;
 		if (request.query) {
@@ -47,8 +43,11 @@ app.post("/api", async (req, res) => {
 		await downloader.downloadFile();
 
 		await downloader.renameFile(request.customName ? sanitize(request.customName) : undefined);
-		console.log(`Sending ${downloader.filename} to ${request.recipientEmail}`);
-		await downloader.sendToKindle(request.recipientEmail);
+
+		if (request.recipientEmail) {
+			console.log(`Sending ${downloader.filename} to ${request.recipientEmail}`);
+			await downloader.sendToKindle(request.recipientEmail);
+		}
 
 		const epub = await downloader.getEPub();
 		const cover = await extractCover(epub);
