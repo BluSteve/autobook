@@ -8,7 +8,7 @@ import {ReadableStream} from 'stream/web';
 import {finished} from "stream/promises";
 import EPub from "epub2";
 import {kindleEmail, kindlePassword} from "./Token";
-import nodemailer from "nodemailer";
+import nodemailer, {SentMessageInfo} from "nodemailer";
 
 function getRandomString() {
 	return Math.random().toString();
@@ -56,17 +56,22 @@ export class Downloader {
 	}
 
 	public async renameFile(customName?: string): Promise<void> {
-		fs.renameSync(this.filename, customName ?? (await this.getEPub()).metadata.title + '.epub');
-		this.filename = customName;
+		const newName = customName ?? (await this.getEPub()).metadata.title + '.epub';
+		fs.renameSync(this.filename, newName);
+		this.filename = newName;
 	}
 
 	public async getEPub(): Promise<EPub> {
 		if (this.epub) return this.epub;
 		return this.epub = await EPub.createAsync(this.filename);
 	}
+
+	public async sendToKindle(recipientEmail: string): Promise<SentMessageInfo> {
+		return await sendFilesToKindle(recipientEmail, [this.filename]);
+	}
 }
 
-export function sendFilesToKindle(recipientEmail: string, filenames: string[]): Promise<any> {
+export function sendFilesToKindle(recipientEmail: string, filenames: string[]): Promise<SentMessageInfo> {
 	const user = kindleEmail;
 	const pass = kindlePassword;
 	const transporter = nodemailer.createTransport({
