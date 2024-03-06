@@ -11,11 +11,12 @@ import {kindleEmail, kindlePassword} from "./Token";
 import nodemailer, {SentMessageInfo} from "nodemailer";
 import Mail from "nodemailer/lib/mailer";
 
-function getRandomString() {
-	return Math.random().toString();
+function getRandomString(): string {
+	return String(Math.random() + Date.now());
 }
 
 export class Downloader {
+	private static readonly BOOKS_ROOT = "books/";
 	private static readonly ANNAS_API_URL = "http://192.168.31.12:5500";
 	public link: URL;
 	public filename: string; // of book
@@ -31,7 +32,7 @@ export class Downloader {
 
 	public static async fromQuery(query: string, searchParams?: any): Promise<Downloader> {
 		const resp = checkStatus(await fetch(`${Downloader.ANNAS_API_URL}/books_specs?` + new URLSearchParams(
-				Object.assign({}, {q: query, ext: "epub"}, searchParams) // searchParams overrides q and ext
+			Object.assign({}, {q: query, ext: "epub"}, searchParams) // searchParams overrides q and ext
 		)));
 
 		// gets the md5 of the most downloaded book
@@ -50,14 +51,15 @@ export class Downloader {
 	public async downloadFile(): Promise<void> {
 		const resp = checkStatus(await fetch(this.link));
 
-		this.filename = MD5.generate(this.link.toString() + getRandomString()) + '.epub';
+		this.filename = Downloader.BOOKS_ROOT + MD5.generate(this.link.toString() + getRandomString()) + '.epub';
 		const fileStream = fs.createWriteStream(this.filename);
 
 		await finished(Readable.fromWeb(resp.body as ReadableStream).pipe(fileStream));
 	}
 
 	public async renameFile(customName?: string): Promise<void> {
-		const newName = customName ?? (await this.getEPub()).metadata.title + '.epub';
+		let newName = customName ?? (await this.getEPub()).metadata.title + '.epub';
+		newName = Downloader.BOOKS_ROOT + newName;
 		fs.renameSync(this.filename, newName);
 		this.filename = newName;
 	}
@@ -107,7 +109,7 @@ export async function extractCover(epub: EPub) {
 	const coverExt = tocElement.href.split('.').slice(-1)[0];
 
 	const image: [Buffer, string] = await epub.getImageAsync(coverId);
-	const coverFilename = MD5.generate(JSON.stringify(epub.metadata) + getRandomString()) + '.' + coverExt;
+	const coverFilename = "covers/" + MD5.generate(JSON.stringify(epub.metadata) + getRandomString()) + '.' + coverExt;
 	fs.writeFileSync(coverFilename, image[0]);
 	return coverFilename;
 }
