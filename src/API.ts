@@ -29,15 +29,24 @@ app.post("/api", async (req, res) => {
 			return;
 		}
 
-		if (request.query) console.log(`Finding book for ${request.query}`);
-		const downloader: Downloader = request.query ?
-			await Downloader.fromQuery(request.query, request.searchParams) :
-			new Downloader(request.link);
+		let downloader: Downloader;
+		if (request.query) {
+			console.log(`Finding book for ${request.query}`);
+			try {
+				downloader = await Downloader.fromQuery(request.query, request.searchParams);
+			} catch (e) {
+				console.error(e);
+				res.status(204).send('No books found');
+				return;
+			}
+		} else {
+			downloader = new Downloader(request.link);
+		}
 
 		console.log(`Downloading ${downloader.link}`);
 		await downloader.downloadFile();
 
-		await downloader.renameFile(sanitize(request.customName));
+		await downloader.renameFile(request.customName ? sanitize(request.customName) : undefined);
 		console.log(`Sending ${downloader.filename} to ${request.recipientEmail}`);
 		await downloader.sendToKindle(request.recipientEmail);
 

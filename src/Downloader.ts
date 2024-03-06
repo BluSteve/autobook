@@ -37,6 +37,9 @@ export class Downloader {
 
 		// gets the md5 of the most downloaded book
 		const json = await resp.json();
+		if (json.message === "No books found") {
+			throw new Error("No books found");
+		}
 		const array = Object.keys(json).map(k => json[k]);
 		const maxDownloads = array.reduce((a, b) => a["downloads_total"] > b["downloads_total"] ? a : b);
 		const md5 = maxDownloads.href.split("/").slice(-1)[0];
