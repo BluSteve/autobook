@@ -51,6 +51,7 @@ app.post("/api", async (req, res) => {
 
 		const epub = await downloader.getEPub();
 		const cover = await extractCover(epub);
+		console.log(`Sending ${downloader.filename} to client`);
 		res.send({
 			link: downloader.link.href,
 			filename: downloader.filename,
