@@ -9,6 +9,7 @@ import {finished} from "stream/promises";
 import EPub from "epub2";
 import {kindleEmail, kindlePassword} from "./Token";
 import nodemailer, {SentMessageInfo} from "nodemailer";
+import Mail from "nodemailer/lib/mailer";
 
 function getRandomString() {
 	return Math.random().toString();
@@ -30,7 +31,7 @@ export class Downloader {
 
 	public static async fromQuery(query: string, searchParams?: any): Promise<Downloader> {
 		const resp = checkStatus(await fetch(`${Downloader.ANNAS_API_URL}/books_specs?` + new URLSearchParams(
-			Object.assign({}, {q: query, ext: "epub"}, searchParams) // searchParams overrides q and ext
+				Object.assign({}, {q: query, ext: "epub"}, searchParams) // searchParams overrides q and ext
 		)));
 
 		// gets the md5 of the most downloaded book
@@ -78,7 +79,7 @@ export function sendFilesToKindle(recipientEmail: string, filenames: string[]): 
 		service: 'zoho',
 		auth: {user, pass}
 	});
-	const mailOptions = {
+	const mailOptions: Mail.Options = {
 		from: user,
 		to: recipientEmail,
 		subject: "Hello from Autobook", // Subject line
@@ -100,7 +101,7 @@ export function sendFilesToKindle(recipientEmail: string, filenames: string[]): 
 }
 
 export async function extractCover(epub: EPub) {
-	const tocElement = epub.listImage().find((image) => JSON.stringify(image).includes('cover'));
+	const tocElement = epub.listImage().find((image) => image.id === epub.metadata.cover);
 
 	const coverId = tocElement.id;
 	const coverExt = tocElement.href.split('.').slice(-1)[0];
