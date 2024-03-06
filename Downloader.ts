@@ -7,6 +7,8 @@ import {Readable} from "stream";
 import {ReadableStream} from 'stream/web';
 import {finished} from "stream/promises";
 import EPub from "epub2";
+import {kindleEmail, kindlePassword} from "./Token";
+import nodemailer from "nodemailer";
 
 function getRandomString() {
 	return Math.random().toString();
@@ -16,9 +18,14 @@ export class Downloader {
 	private static readonly ANNAS_API_URL = "http://192.168.31.12:5500";
 	public link: URL;
 	public filename: string; // of book
+	private epub: EPub;
 
-	constructor(link: URL) {
-		this.link = link;
+	public constructor(link: string | URL) {
+		if (link instanceof URL) {
+			this.link = link;
+		} else {
+			this.link = new URL(link);
+		}
 	}
 
 	public static async fromQuery(query: string, searchParams?: any): Promise<Downloader> {
@@ -47,13 +54,47 @@ export class Downloader {
 
 		await finished(Readable.fromWeb(resp.body as ReadableStream).pipe(fileStream));
 	}
+
+	public async renameFile(customName?: string): Promise<void> {
+		fs.renameSync(this.filename, customName ?? (await this.getEPub()).metadata.title + '.epub');
+		this.filename = customName;
+	}
+
+	public async getEPub(): Promise<EPub> {
+		if (this.epub) return this.epub;
+		return this.epub = await EPub.createAsync(this.filename);
+	}
 }
 
-export async function getEPub(filename: string): Promise<EPub> {
-	return await EPub.createAsync(filename);
+export function sendFilesToKindle(recipientEmail: string, filenames: string[]): Promise<any> {
+	const user = kindleEmail;
+	const pass = kindlePassword;
+	const transporter = nodemailer.createTransport({
+		service: 'zoho',
+		auth: {user, pass}
+	});
+	const mailOptions = {
+		from: user,
+		to: recipientEmail,
+		subject: "Hello from Autobook", // Subject line
+		text: "Here's your book!", // plain text body
+		attachments: filenames.map((filename) => {
+			return {path: filename};
+		})
+	}
+	return new Promise((resolve, reject) => {
+		transporter.sendMail(mailOptions, function (error, info) {
+			if (error) {
+				return reject(error);
+			} else {
+				console.log('Email sent: ' + info.response);
+				return resolve(info);
+			}
+		});
+	});
 }
 
-export async function getEPubCover(epub: EPub) {
+export async function extractCover(epub: EPub) {
 	const tocElement = epub.listImage().find((image) => JSON.stringify(image).includes('cover'));
 
 	const coverId = tocElement.id;

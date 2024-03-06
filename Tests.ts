@@ -1,12 +1,12 @@
-import {getEPub, getEPubCover} from "./Downloader";
+import {Downloader, extractCover} from "./Downloader";
 
 async function main() {
-	// const downloader: Downloader = await Downloader.fromQuery("pale fire");
-	// console.log(downloader.link);
-	// await downloader.downloadFile();
-	let ePub = await getEPub('ed43d07f6b493ef16bb175980e271cac0850.epub');
-	console.log(ePub.metadata.title);
-	console.log(await getEPubCover(ePub));
+	const downloader: Downloader = new Downloader('https://cdn3.booksdl.org/get.php?md5=e84f9503faeb13d99362aef2d6bafd6d&key=Q2Z6OUOKZD30FXYN')
+	await downloader.downloadFile();
+	// console.log((await downloader.getEPub()).metadata.title);
+	await downloader.renameFile();
+	console.log(await extractCover(await downloader.getEPub()));
+
 }
 
 main().then();
