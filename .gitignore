@@ -7,3 +7,5 @@ src/Token.ts
 *.epub
 *.jpg
 *.jpeg
+books
+covers
