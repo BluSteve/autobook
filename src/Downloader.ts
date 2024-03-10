@@ -31,12 +31,12 @@ export class Downloader {
 	}
 
 	public static async fromQuery(query: string, searchParams?: any): Promise<Downloader> {
-		const resp = checkStatus(await fetch(`${Downloader.ANNAS_API_URL}/books_specs?` + new URLSearchParams(
-			Object.assign({}, {q: query, ext: "epub"}, searchParams) // searchParams overrides q and ext
+		const res = checkStatus(await fetch(`${Downloader.ANNAS_API_URL}/books_specs?` + new URLSearchParams(
+			Object.assign({}, {q: query, ext: "epub", src: "lgli"}, searchParams) // searchParams overrides q and ext
 		)));
 
 		// gets the md5 of the most downloaded book
-		const json = await resp.json();
+		const json = await res.json();
 		if (json.message === "No books found") {
 			throw new Error("No books found");
 		}
@@ -52,12 +52,12 @@ export class Downloader {
 	}
 
 	public async downloadFile(): Promise<void> {
-		const resp = checkStatus(await fetch(this.link));
+		const res = checkStatus(await fetch(this.link));
 
 		this.filename = Downloader.BOOKS_ROOT + MD5.generate(this.link.toString() + getRandomString()) + '.epub';
 		const fileStream = fs.createWriteStream(this.filename);
 
-		await finished(Readable.fromWeb(resp.body as ReadableStream).pipe(fileStream));
+		await finished(Readable.fromWeb(res.body as ReadableStream).pipe(fileStream));
 	}
 
 	public async renameFile(customName?: string): Promise<void> {
@@ -105,8 +105,14 @@ export function sendFilesToKindle(recipientEmail: string, filenames: string[]): 
 	});
 }
 
-export async function extractCover(epub: EPub) {
-	const tocElement = epub.listImage().find((image) => image.id === epub.metadata.cover);
+export async function extractCover(epub: EPub): Promise<string> {
+	let tocElement = epub.listImage().find((image) => image.id === epub.metadata.cover);
+	if (!tocElement) {
+		tocElement = epub.listImage().find((image) => JSON.stringify(image).includes('cover'));
+	}
+	if (!tocElement) {
+		throw new Error("No cover found");
+	}
 
 	const coverId = tocElement.id;
 	const coverExt = tocElement.href.split('.').slice(-1)[0];

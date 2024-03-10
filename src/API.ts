@@ -1,6 +1,7 @@
 import express, {RequestHandler} from "express";
 import {Downloader, extractCover} from "./Downloader";
 import sanitize from "sanitize-filename";
+import cors from "cors";
 
 const app = express();
 const myLogger: RequestHandler = function (req, res, next) {
@@ -8,6 +9,7 @@ const myLogger: RequestHandler = function (req, res, next) {
 	next();
 }
 
+app.use(cors());
 app.use(myLogger);
 app.use(express.json());
 app.use('/books', express.static('books'));
@@ -65,6 +67,7 @@ app.post("/api", async (req, res) => {
 	}
 });
 
-app.listen(3600, () => {
-	console.log("Server is running on port 3000");
+let port1 = 3600;
+app.listen(port1, () => {
+	console.log(`Server is running on ${port1}`);
 });

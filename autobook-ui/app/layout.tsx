@@ -1,8 +1,14 @@
+import '@mantine/core/styles.css';
 import type {Metadata} from "next";
 import {Inter} from "next/font/google";
-import {MantineProvider} from "@mantine/core";
+import {createTheme, MantineProvider} from "@mantine/core";
 
 const inter = Inter({subsets: ["latin"]});
+
+const theme = createTheme({
+	/** Your theme override here */
+});
+
 
 export const metadata: Metadata = {
 	title: "Create Next App",
@@ -17,7 +23,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 		<body className={inter.className}>
-		<MantineProvider defaultColorScheme='auto'>
+		<MantineProvider theme={theme} defaultColorScheme='light'>
 			{children}
 		</MantineProvider>
 		</body>
