@@ -6,27 +6,50 @@ import {useForm} from "@mantine/form";
 
 export default function Main() {
 	const [submitText, setSubmitText] = useState("Download");
+	const [displayCustomName, setDisplayCustomName] = useState(false);
+
 	const form = useForm({
 		initialValues: {
 			query: "",
 			email: ""
+		},
+
+		validate: {
+			query: (value) => !/^\s*$/.test(value) ? null : "Query cannot be empty"
 		}
 	});
 
+	class BookResponse {
+		link!: string;
+		filename!: string;
+		title!: string;
+		author!: string;
+		cover!: string;
+	}
+
 	async function handleSubmit(values: any) {
-		console.log(values);
+		let reqJson: any = {};
+		if (submitText === "Send to Kindle") {
+			reqJson.recipientEmail = values.email;
+		}
+		try {
+			new URL(values.query);
+			reqJson.link = values.query;
+		} catch (e) {
+			reqJson.query = values.query;
+		}
+		reqJson.searchParams = values.searchParams;
+		reqJson.customName = values.customName;
+		console.log("reqJson", reqJson);
+
 		const res = await fetch("http://localhost:3600/api", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({
-				query: values.query,
-				recipientEmail: values.email
-			}),
+			body: JSON.stringify(reqJson),
 		});
-		const json = await res.json();
-		console.log(json);
+		const obj: BookResponse = await res.json();
 	}
 
 	function onEmailInput(e: FormEvent<HTMLInputElement>) {
@@ -38,16 +61,33 @@ export default function Main() {
 		}
 	}
 
+	function onQueryInput(e: FormEvent<HTMLInputElement>) {
+		let value = e.currentTarget.value;
+		try {
+			new URL(value);
+			setDisplayCustomName(true);
+		} catch (e) {
+			setDisplayCustomName(false);
+		}
+	}
+
 	return (
 		<Box mt="10" style={{display: "flex", justifyContent: "center"}}>
 			<form onSubmit={form.onSubmit(handleSubmit)}>
-				<Stack>
+				<Stack gap="xs">
 					<TextInput
-						placeholder="Query or link"
+						label="Query or link"
+						withAsterisk
+						onInput={onQueryInput}
 						{...form.getInputProps("query")}
 					/>
 					<TextInput
-						placeholder="Email (optional)"
+						style={{display: displayCustomName ? 'inline' : 'none'}}
+						label="Custom title"
+						{...form.getInputProps("customName")}
+					/>
+					<TextInput
+						label="Email"
 						onInput={onEmailInput}
 						{...form.getInputProps("email")}
 					/>
