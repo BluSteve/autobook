@@ -1,6 +1,7 @@
 import express, {RequestHandler} from "express";
 import {Downloader, extractCover} from "./Downloader";
 import sanitize from "sanitize-filename";
+import cors from "cors";
 
 const app = express();
 const myLogger: RequestHandler = function (req, res, next) {
@@ -8,6 +9,7 @@ const myLogger: RequestHandler = function (req, res, next) {
 	next();
 }
 
+app.use(cors());
 app.use(myLogger);
 app.use(express.json());
 app.use('/books', express.static('books'));
@@ -25,6 +27,21 @@ app.post("/api", async (req, res) => {
 	try {
 		const request: AutobookRequest = req.body;
 
+		// data validation
+		if (!request.query && !request.link) {
+			res.status(400).send('Query or link required');
+			return;
+		}
+		if (request.query && request.link) {
+			res.status(400).send('Only one of query or link is allowed');
+			return;
+		}
+		if (request.recipientEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(request.recipientEmail)) {
+			res.status(400).send('Invalid email');
+			return;
+		}
+
+
 		let downloader: Downloader;
 		if (request.query) {
 			console.log(`Finding book for ${request.query}`);
@@ -36,7 +53,7 @@ app.post("/api", async (req, res) => {
 				return;
 			}
 		} else {
-			downloader = new Downloader(request.link);
+			downloader = new Downloader(request.link); // would throw error if link is invalid
 		}
 
 		console.log(`Downloading ${downloader.link}`);
@@ -65,6 +82,7 @@ app.post("/api", async (req, res) => {
 	}
 });
 
-app.listen(3600, () => {
-	console.log("Server is running on port 3000");
+let port1 = 3600;
+app.listen(port1, () => {
+	console.log(`Server is running on ${port1}`);
 });
