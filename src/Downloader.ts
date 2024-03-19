@@ -61,7 +61,7 @@ export class Downloader {
 	}
 
 	public async renameFile(customName?: string): Promise<void> {
-		let newName = customName ?? (await this.getEPub()).metadata.title + '.epub';
+		let newName = (customName ?? (await this.getEPub()).metadata.title) + '.epub';
 		newName = Downloader.BOOKS_ROOT + newName;
 		fs.renameSync(this.filename, newName);
 		this.filename = newName;
