@@ -1,5 +1,6 @@
 # 📚 AutoBook
-#### _AutoBook sends any book to Kindle instantly!_
+### _AutoBook sends any book to Kindle instantly!_
+#### Live at https://autobook.live!
 It's an Anna's Archive/ libgen wrapper that streamlines the **"book title ➡️ libgen ➡️ Kindle"** workflow.
 
 ![demo2.gif](demo2.gif)
