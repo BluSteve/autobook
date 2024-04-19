@@ -1,6 +1,6 @@
 # 📚 AutoBook
-#### _AutoBook downloads any book you want to Kindle instantly!_
-It's a Anna's Archive/ libgen wrapper that streamlines the **"book title ➡️ libgen ➡️ Kindle"** workflow.
+#### _AutoBook sends any book to Kindle instantly!_
+It's an Anna's Archive/ libgen wrapper that streamlines the **"book title ➡️ libgen ➡️ Kindle"** workflow.
 
 ![demo2.gif](demo2.gif)
 
@@ -21,3 +21,4 @@ npm run dev -- starts development server
 
 npm run build && npm run start -- starts production server
 ```
+Currently, only the frontend is open-source.
